@@ -7,7 +7,6 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import {
   Select,
   SelectContent,
@@ -18,23 +17,19 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
-
-const registerSchema = z.object({
-  name: z.string().min(3),
-  email: z.string().email(),
-  mobile: z.number().min(10),
-  password: z.string().min(8),
-  type: z.string(),
-});
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Database } from "@/lib/types/database.types";
+import { registerSchema } from "@/lib/schemas/auth.schema";
 
 function RegisterForm() {
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
+      mobile: 0,
       email: "",
       password: "",
-      type: "",
+      type: "CUSTOMER",
     },
   });
 
@@ -43,23 +38,45 @@ function RegisterForm() {
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
+  const supabase = createClientComponentClient<Database>();
+
   async function onSubmit(values: z.infer<typeof registerSchema>) {
-    // setLoading(true);
-    // try {
-    //   const register = await axios.post("/api/auth/signup", values);
-    //     router.push("/dashboard");
-    //   } else {
-    //     router.push("/pharmacist");
-    //   }
-    // } catch (e: any) {
-    //   toast({
-    //     title: "Unable to register",
-    //     description: e.response.data.error.message,
-    //     variant: "destructive",
-    //   });
-    // } finally {
-    //   setLoading(false);
-    // }
+    console.log(values);
+    setLoading(true);
+    try {
+      const register = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        phone: values.mobile.toString(),
+      });
+
+      if (register.data.user) {
+        await supabase.from("users").insert({
+          user_id: register.data.user.id,
+          name: values.name,
+          mobile: values.mobile.toString(),
+          email: values.email,
+        });
+
+        if (values.type === "CUSTOMER") {
+          await supabase.from("customers").insert({
+            user_id: register.data.user.id,
+          });
+        } else {
+          await supabase.from("suppliers").insert({
+            user_id: register.data.user.id,
+          });
+        }
+      }
+    } catch (e: any) {
+      toast({
+        title: "Unable to register",
+        description: e.response.data.error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -128,8 +145,8 @@ function RegisterForm() {
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="DOCTOR">Doctor</SelectItem>
-              <SelectItem value="PHARMACIST">Pharmacist</SelectItem>
+              <SelectItem value="CUSTOMER">Customer</SelectItem>
+              <SelectItem value="SUPPLIER">Supplier</SelectItem>
             </SelectContent>
           </Select>
         </div>

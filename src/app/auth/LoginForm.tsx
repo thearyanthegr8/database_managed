@@ -32,26 +32,21 @@ function LoginForm() {
   const [loading, setLoading] = useState<boolean>(false);
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
-    // setLoading(true);
-    // const { data, error } = await supabase.auth.signInWithPassword({
-    //   email: values.email,
-    //   password: values.password,
-    // });
-
-    // if (error) {
-    //   toast({
-    //     title: "Unable to login",
-    //     description: error.message,
-    //     variant: "destructive",
-    //   });
-    //   setLoading(false);
-    // } else {
-    //   if (data?.user?.user_metadata?.type === "PHARMACIST") {
-    //     router.push("/pharmacist");
-    //   } else {
-    //     router.push("/dashboard");
-    //   }
-    // }
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+    if (error) {
+      toast({
+        title: "Unable to login",
+        description: error.message,
+        variant: "destructive",
+      });
+      setLoading(false);
+    } else {
+      router.push("/");
+    }
   }
 
   const [hide, setHide] = useState(true);
