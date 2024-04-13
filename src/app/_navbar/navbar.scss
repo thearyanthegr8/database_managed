@@ -1,0 +1,55 @@
+@font-face {
+    font-family: "Noir-pro-regular";
+    src: url(../../../public/fonts/Noir-pro/Noir-regular.otf);
+  }
+  
+  .navbar {
+    height: 80px;
+    display: flex;
+    background-color: rgba($color: #2e2c2c, $alpha: 0.4);
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    font-size: 1.3rem;
+    // border-bottom: 1px solid white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    // max-width: 2200px;
+    backdrop-filter: blur(180px);
+  
+    &__logo{
+      // right: 25%;
+      transform: translate(87%, 10%);
+    }
+  
+    &__list {
+      width: 95vw;
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      grid-gap: 10px;
+      list-style: none;
+      text-align: center;
+      justify-content: end;
+      margin-right: 2rem;
+  
+      &--navItem {
+        height: 80px;
+  
+        &-link {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          justify-content: center;
+          height: 100%;
+          padding: 0 1.5rem;
+          color: #ffffff;
+          font-family: "Noir-pro-regular";
+          
+        }
+      }
+    }
+  }
+  
