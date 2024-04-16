@@ -3,13 +3,12 @@ import "./globals.css";
 import Sidemenu from "./_landing-page/side-menu";
 import Footer from "./_footer/footer";
 import { Sidedash } from "./_landing-page/side-dash";
-import Product from "./_landing-page/product";
 import Productcard from "./_landing-page/product-card";
 
 export default function Home() {
   return (
    <>
-      <Sidedash />
+      {/* <Sidedash /> */}
       <div className="flex flex-wrap w-full gap-10 justify-center">
       <Productcard />
       <Productcard />
@@ -19,11 +18,6 @@ export default function Home() {
       <Productcard />
       <Productcard />
       <Productcard />
-      <Productcard />
-      <Productcard />
-      <Productcard />
-      <Productcard />
-
       </div>
       {/* <Product image="/image/product/product1.svg" /> */}
    <Footer />
