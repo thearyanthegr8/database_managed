@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "./_navbar/navbar";
 import { Sidedash } from "./_landing-page/side-dash";
 import Footer from "./_footer/footer";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,11 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        {/* <Navbar /> */}
-        {/* <Sidedash /> */}
+      <body className={`${inter.className} px-10 py-5`}>
+        <Toaster />
+
         {children}
-        {/* <Footer /> */}
       </body>
     </html>
   );

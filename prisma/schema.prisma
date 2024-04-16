@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  user_id    String     @id @db.VarChar(255)
+  name       String?    @db.VarChar(255)
+  mobile     String?    @db.VarChar
+  email      String?    @unique(map: "uc_users_email") @db.VarChar(255)
+  created_at DateTime?  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime?  @default(now()) @db.Timestamptz(6)
+  customers  customers?
+  suppliers  suppliers?
+}
+
+model customers {
+  user_id String   @id @db.VarChar(255)
+  address String?  @db.VarChar
+  users   users    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_customers_users")
+  orders  orders[]
+}
+
+model orders {
+  order_id      String         @id @db.VarChar(255)
+  customer_id   String?        @db.VarChar(255)
+  delivery_fee  Int?
+  total         Int?
+  payment_mode  String?        @db.VarChar(255)
+  orderproducts orderproduct[]
+  customers     customers?     @relation(fields: [customer_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_orders_customers")
+}
+
+model suppliers {
+  user_id       String       @id @db.VarChar(255)
+  company_name  String?      @db.VarChar(255)
+  business_type String?      @db.VarChar(255)
+  users         users        @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_suppliers_users")
+  warehouses    warehouses[]
+}
+
+model warehouses {
+  warehouse_id String     @id @db.VarChar(255)
+  supplier_id  String?    @db.VarChar(255)
+  name         String?    @db.VarChar(255)
+  location     String?    @db.VarChar(255)
+  capacity     Int?
+  products     products[]
+  suppliers    suppliers? @relation(fields: [supplier_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_warehouses_suppliers")
+}
+
+model products {
+  product_id     String         @id @db.VarChar(255)
+  warehouse_id   String?        @db.VarChar(255)
+  name           String?        @db.VarChar(255)
+  sizes          String[]       @db.VarChar
+  colors         String[]       @db.VarChar
+  stock_quantity Int?
+  price          Int?
+  orderproducts  orderproduct[]
+  warehouses     warehouses?    @relation(fields: [warehouse_id], references: [warehouse_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_products_warehouses")
+}
+
+model orderproduct {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.VarChar(255)
+  order_id   String?   @db.VarChar(255)
+  product_id String?   @db.VarChar(255)
+  qty        Int?
+  size       String?   @db.VarChar
+  color      String?   @db.VarChar
+  orders     orders?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_orderproduct_orders")
+  products   products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_orderproduct_products")
+
+  @@unique([order_id, product_id], map: "uc_orderproduct_order_id_product_id")
+}
