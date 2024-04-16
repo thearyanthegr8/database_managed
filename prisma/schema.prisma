@@ -12,10 +12,16 @@ model users {
   name       String?    @db.VarChar(255)
   mobile     String?    @db.VarChar
   email      String?    @unique(map: "uc_users_email") @db.VarChar(255)
-  created_at DateTime?  @default(now()) @db.Timestamptz(6)
-  updated_at DateTime?  @default(now()) @db.Timestamptz(6)
+  created_at DateTime?  @db.Timestamp(6)
+  updated_at DateTime?  @db.Timestamp(6)
+  type       USERTYPE   @default(CUSTOMER)
   customers  customers?
   suppliers  suppliers?
+}
+
+enum USERTYPE {
+  CUSTOMER
+  SUPPLIER
 }
 
 model customers {

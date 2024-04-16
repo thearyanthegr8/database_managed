@@ -5,6 +5,7 @@ import Navbar from "./_navbar/navbar";
 import { Sidedash } from "./_landing-page/side-dash";
 import Footer from "./_footer/footer";
 import { Toaster } from "@/components/ui/toaster";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,10 +21,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} px-10 py-5`}>
+      <body className={`${inter.className}`}>
+        <Navbar />
         <Toaster />
-
-        {children}
+        <main className="min-h-screen">{children}</main>
+        <Footer />
       </body>
     </html>
   );
