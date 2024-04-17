@@ -5,7 +5,6 @@ import Navbar from "./_navbar/navbar";
 import { Sidedash } from "./_landing-page/side-dash";
 import Footer from "./_footer/footer";
 import { Toaster } from "@/components/ui/toaster";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
