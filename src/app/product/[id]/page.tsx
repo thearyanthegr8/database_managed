@@ -1,7 +1,10 @@
 "use client";
+import { CartAtom } from "@/atoms";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 import { products } from "@prisma/client";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useAtom } from "jotai";
 import { Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -31,6 +34,34 @@ export default function Page() {
   useEffect(() => {
     getProduct();
   }, []);
+
+  const [cart, setCart] = useAtom<any[]>(CartAtom);
+
+  function addToCart() {
+    if (size === "" || color === "") {
+      toast({
+        variant: "destructive",
+        description: `Please select ${size === "" ? "a size" : ""} ${
+          size === "" && color === "" ? "and" : ""
+        } ${color === "" ? "a color" : ""} `,
+      });
+      return;
+    }
+    setCart((prev) => [
+      ...prev,
+      {
+        product_id: product?.product_id,
+        name: product?.name,
+        price: product?.price,
+        quantity: quantity,
+        size: size,
+        color: color,
+      },
+    ]);
+    toast({
+      description: "Added to cart",
+    });
+  }
 
   if (loading) {
     return (
@@ -91,7 +122,15 @@ export default function Page() {
             </Button>
           ))}
         </div>
-        <Button className="w-full">Add to cart</Button>
+        <Button
+          className="w-full"
+          onClick={() => addToCart()}
+          disabled={cart.find((c) => c.product_id === product?.product_id)}
+        >
+          {cart.find((c) => c.product_id === product?.product_id)
+            ? "Added"
+            : "Add to cart"}
+        </Button>
       </div>
     </section>
   );

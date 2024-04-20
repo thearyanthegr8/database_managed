@@ -20,46 +20,50 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import { CartAtom } from "@/atoms";
+import { useAtom } from "jotai";
+import Image from "next/image";
 
 type item = {
-  id: string;
+  product_id: string;
   name: string;
-  image: string;
   price: number;
   quantity: number;
+  size: string;
+  color: string;
+  // image: string;
 };
 
 export default function Page() {
-  const [items, setItems] = useState<item[]>([
-    {
-      id: "1",
-      image: "",
-      name: "Venkat",
-      price: 10,
-      quantity: 1,
-    },
-  ]);
+  const [cart, setCart] = useAtom<any[]>(CartAtom);
+
   const [subTotal, setSubTotal] = useState<number>(
-    items.reduce((total, item) => total + item.price * item.quantity, 0)
+    cart.reduce((total, item) => total + item.price * item.quantity, 0)
   );
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
+
   const [Total, setTotal] = useState<number>(subTotal + deliveryFee);
+
   const decreaseQuantity = (item: item) => {
     if (item.quantity <= 1) {
-      setItems((prev) => prev.filter((o) => o.id !== item.id));
+      setCart((prev) => prev.filter((o) => o.product_id !== item.product_id));
     } else {
-      setItems((prev) =>
+      setCart((prev) =>
         prev.map((o) =>
-          o.id === item.id ? { ...o, quantity: item.quantity - 1 } : item
+          o.id === item.product_id
+            ? { ...o, quantity: item.quantity - 1 }
+            : item
         )
       );
     }
   };
 
   const increaseQuantity = (item: item) => {
-    setItems((prev) =>
+    setCart((prev) =>
       prev.map((o) =>
-        o.id === item.id ? { ...o, quantity: item.quantity + 1 } : item
+        o.product_id === item.product_id
+          ? { ...o, quantity: item.quantity + 1 }
+          : item
       )
     );
   };
@@ -82,13 +86,20 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item, index) => (
-              <TableRow key={item.id}>
+            {cart.map((item, index) => (
+              <TableRow key={item.id} className="h-full">
                 <TableCell className="font-medium">{index + 1}</TableCell>
-                <TableCell></TableCell>
+                <TableCell>
+                  <Image
+                    src="/image/sample.jpg"
+                    alt="soda can"
+                    width={200}
+                    height={300}
+                  />
+                </TableCell>
                 <TableCell>{item.name}</TableCell>
                 <TableCell>{item.price}</TableCell>
-                <TableCell className="flex gap-2 items-center justify-start">
+                <TableCell className="flex gap-2 items-center justify-start h-full bg-red-100">
                   <Button
                     variant={"outline"}
                     onClick={() => decreaseQuantity(item)}

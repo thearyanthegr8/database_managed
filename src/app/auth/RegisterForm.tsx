@@ -48,6 +48,9 @@ function RegisterForm() {
         email: values.email,
         password: values.password,
         phone: values.mobile.toString(),
+        options: {
+          emailRedirectTo: `${location.origin}/auth/callback`,
+        },
       });
 
       if (register.data.user) {
@@ -68,6 +71,8 @@ function RegisterForm() {
           });
         }
       }
+
+      router.refresh();
     } catch (e: any) {
       toast({
         title: "Unable to register",
