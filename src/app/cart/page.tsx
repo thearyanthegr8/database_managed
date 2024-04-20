@@ -145,7 +145,7 @@ export default function Page() {
           <CardFooter>
             <Button
               variant="outline"
-              onClick={() => router.push("/cart/checkout")}
+              onClick={() => router.push("/cart/checkout")} // :3
             >
               Proceed to Checkout
             </Button>
