@@ -1,5 +1,6 @@
 "use client";
 import { Card } from "@/components/ui/card";
+import { Icons } from "@/components/ui/icons";
 import { Separator } from "@/components/ui/separator";
 import { Database } from "@/lib/types/database.types";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -89,7 +90,9 @@ function Page() {
   return (
     <div className="flex flex-col gap-8">
       {loading ? (
-        <div>Loading...</div>
+        <div className="w-full flex justify-center">
+          <Icons.spinner className="animate-spin h-8 w-8" />
+        </div>
       ) : (
         orders &&
         orders.map((order: any) => (
