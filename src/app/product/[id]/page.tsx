@@ -2,12 +2,13 @@
 import { CartAtom } from "@/atoms";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { Database } from "@/lib/types/database.types";
 import { products } from "@prisma/client";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useAtom } from "jotai";
 import { Minus, Plus } from "lucide-react";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const supabase = createClientComponentClient();
@@ -19,6 +20,23 @@ export default function Page() {
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState("");
   const [color, setColor] = useState("");
+
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClientComponentClient<Database>();
+  // const router = useRouter();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      console.log(session?.user);
+      setUser(session?.user);
+    };
+
+    fetchUser();
+  }, [supabase.auth]);
 
   async function getProduct() {
     const { data, error } = await supabase
@@ -92,11 +110,16 @@ export default function Page() {
           <Button
             variant={"outline"}
             onClick={() => setQuantity(quantity <= 1 ? 1 : quantity - 1)}
+            disabled={!user}
           >
             <Minus size={12} />
           </Button>
           <p>{quantity}</p>
-          <Button variant={"outline"} onClick={() => setQuantity(quantity + 1)}>
+          <Button
+            variant={"outline"}
+            onClick={() => setQuantity(quantity + 1)}
+            disabled={!user}
+          >
             <Plus size={12} />
           </Button>
         </div>
@@ -106,6 +129,7 @@ export default function Page() {
               key={s}
               variant={s === size ? "secondary" : "outline"}
               onClick={() => setSize(s)}
+              disabled={!user}
             >
               {s}
             </Button>
@@ -117,20 +141,23 @@ export default function Page() {
               key={c}
               variant={c === color ? "secondary" : "outline"}
               onClick={() => setColor(c)}
+              disabled={!user}
             >
               <span style={{ color: c }}>{c}</span>
             </Button>
           ))}
         </div>
-        <Button
-          className="w-full"
-          onClick={() => addToCart()}
-          disabled={cart.find((c) => c.product_id === product?.product_id)}
-        >
-          {cart.find((c) => c.product_id === product?.product_id)
-            ? "Added"
-            : "Add to cart"}
-        </Button>
+        {user && (
+          <Button
+            className="w-full"
+            onClick={() => addToCart()}
+            disabled={cart.find((c) => c.product_id === product?.product_id)}
+          >
+            {cart.find((c) => c.product_id === product?.product_id)
+              ? "Added"
+              : "Add to cart"}
+          </Button>
+        )}
       </div>
     </section>
   );

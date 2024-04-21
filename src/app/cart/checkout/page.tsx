@@ -1,8 +1,8 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { z } from "zod";
+import { set, z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -33,85 +33,121 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Database } from "@/lib/types/database.types";
+import { CartAtom } from "@/atoms";
+import { useAtom } from "jotai";
+import { toast } from "@/components/ui/use-toast";
+import { Icons } from "@/components/ui/icons";
 
 type item = {
-  id: string;
+  product_id: string;
   name: string;
-  image: string;
   price: number;
   quantity: number;
+  size: string;
+  color: string;
 };
 
-const formSchema = z.object({
-  fullname: z.string().min(2, { message: "Enter your full name." }).max(50),
-  contactinfo: z
-    .string()
-    .min(9, { message: "What's your email address and phone number?" })
-    .max(50),
-  fulladdress: z
-    .string()
-    .min(2, {
-      message:
-        "Enter your full address, including house number, street, city, state and country",
-    })
-    .max(300),
-  pincode: z.string().min(6, { message: "Enter your PIN Code" }).max(6),
-  creditcarddetails: z
-    .string()
-    .min(3, { message: "Fill in all your credit card details." })
-    .max(50),
-});
-
 export default function Page() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const [loading, setLoading] = useState<boolean>(false);
+
+  async function onSubmit(values: z.infer<any>) {
+    setLoading(true);
+    try {
+      const { data: order, error } = await supabase
+        .from("orders")
+        .insert({
+          customer_id: user.user_id,
+          delivery_fee: deliveryFee,
+          total: Total,
+          payment_mode: "Cash",
+        })
+        .select();
+
+      console.log(order);
+
+      if (order !== null) {
+        cart.forEach(async (item: item) => {
+          try {
+            const { data: product, error } = await supabase
+              .from("orderproduct")
+              .insert({
+                order_id: order[0].order_id,
+                product_id: item.product_id,
+                qty: item.quantity,
+                size: item.size,
+                color: item.color,
+              });
+          } catch (e) {}
+        });
+      }
+
+      toast({ description: "Order Placed Successfully!" });
+    } catch (e) {
+      console.log("Error", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClientComponentClient<Database>();
+  // const router = useRouter();
+
+  const form = useForm<z.infer<any>>({
+    // resolver: zodResolver(anySchema),
     defaultValues: {
       fullname: "",
-      contactinfo: "", // Should be a string
-      fulladdress: "",
-      pincode: "", // Should be a string
+      email: "", // Should be a string
+      mobile: "",
+      address: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
-  }
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-  const [items, setItems] = useState<item[]>([
-    {
-      id: "1",
-      image: "",
-      name: "Venkat",
-      price: 10,
-      quantity: 1,
-    },
-  ]);
+      // setUser(session?.user.user_metadata);
+
+      const { data: user, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("user_id", session?.user.id);
+
+      if (user) {
+        const { data: typeData, error: typeError } = await supabase
+          .from(`${user[0].type.toLowerCase()}s`)
+          .select("*")
+          .eq("user_id", user[0].user_id);
+
+        if (typeData) {
+          user[0] = { ...user[0], ...typeData[0] };
+        }
+        setUser(user[0]);
+
+        form.setValue("fullname", user[0].name);
+        form.setValue("email", user[0].email);
+        form.setValue("mobile", user[0].mobile);
+        form.setValue("address", user[0].address);
+      }
+    };
+
+    fetchUser();
+
+    fetchUser();
+  }, [form, supabase, supabase.auth]);
+
+  const [cart, setCart] = useAtom<any[]>(CartAtom);
+
   const [subTotal, setSubTotal] = useState<number>(
-    items.reduce((total, item) => total + item.price * item.quantity, 0)
+    cart.reduce((total, item) => total + item.price * item.quantity, 0)
   );
-  const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [deliveryFee, setDeliveryFee] = useState<number>(10);
   const [Total, setTotal] = useState<number>(subTotal + deliveryFee);
-  const decreaseQuantity = (item: item) => {
-    if (item.quantity <= 1) {
-      setItems((prev) => prev.filter((o) => o.id !== item.id));
-    } else {
-      setItems((prev) =>
-        prev.map((o) =>
-          o.id === item.id ? { ...o, quantity: item.quantity - 1 } : item
-        )
-      );
-    }
-  };
-
-  const increaseQuantity = (item: item) => {
-    setItems((prev) =>
-      prev.map((o) =>
-        o.id === item.id ? { ...o, quantity: item.quantity + 1 } : item
-      )
-    );
-  };
 
   const router = useRouter();
 
@@ -124,28 +160,8 @@ export default function Page() {
             <p className="text-sm text-muted-foreground">
               Fill in your details!
             </p>
-            {/* <br /> */}
-            {/* <p className="text-sm text-muted-foreground font-bold text-center">
-              Express Pay using UPI
-            </p> */}
           </div>
-          {/* <Separator className="h-[1px]" />
-          <div className="flex items-center space-x-4 text-sm w-full justify-center">
-            <div>
-              <Button variant="outline">GPay</Button>
-            </div>
-            <Separator orientation="vertical" className="h-5" />
-            <div>
-              <Button variant="outline">PayTM</Button>
-            </div>
-            <Separator orientation="vertical" className="h-5" />
-            <div>
-              <Button variant="outline">PhonePe</Button>
-            </div>
-          </div> */}
           <div className="text-sm text-center text-bold">
-            {/* <h4>or continue below to pay with credit card</h4>
-            <br></br> */}
             <div className="text-sm text-left">
               <Form {...form}>
                 <form
@@ -174,52 +190,48 @@ export default function Page() {
                     )}
                   />
                   <Separator className="h-[1px]" />
-                  <FormField
-                    control={form.control}
-                    name="contactinfo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Information</FormLabel>
-                        <div className="flex gap-2">
+                  <div className="flex gap-2 w-full">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Email ID</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Enter your email address"
                               {...field}
                             />
                           </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="mobile"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Mobile No.</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Enter your phone number"
+                              placeholder="Enter your email address"
                               {...field}
                             />
                           </FormControl>
-                        </div>
-                        <FormDescription>Omit country code.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <Separator className="h-[1px]" />
                   <FormField
                     control={form.control}
-                    name="fulladdress"
+                    name="address"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Address</FormLabel>
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input
-                              placeholder="Enter your address"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <Input
-                              placeholder="Apartment No./Suite No. etc"
-                              {...field}
-                            />
-                          </FormControl>
-                        </div>
+                        <FormControl>
+                          <Input placeholder="Enter your address" {...field} />
+                        </FormControl>
                         <FormDescription>
                           Enter your house number, street, locality, city and
                           country.
@@ -228,52 +240,23 @@ export default function Page() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="pincode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>PIN Code</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your PIN Code" {...field} />
-                        </FormControl>
-                        <FormDescription></FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Separator className="h-[1px]" />
-                  <FormField
-                    control={form.control}
-                    name="creditcarddetails"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Credit Card Details</FormLabel>
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input
-                              placeholder="Enter your card number"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormControl>
-                            <Input placeholder="Enter your CVV" {...field} />
-                          </FormControl>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter Expiry Date (MM/YY)"
-                              {...field}
-                            />
-                          </FormControl>
-                        </div>
-                        <FormDescription></FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Dialog>
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading && <Icons.spinner className="animate-spin mr-2" />}
+                    Confirm Payment & Place Order
+                  </Button>
+
+                  {/* <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="default" className="w-full">
+                      <Button
+                        variant="default"
+                        className="w-full"
+                        type="submit"
+                      >
                         Confirm Payment & Place Order
                       </Button>
                     </DialogTrigger>
@@ -288,7 +271,7 @@ export default function Page() {
                         </DialogDescription>
                       </DialogHeader>
                     </DialogContent>
-                  </Dialog>
+                  </Dialog> */}
                 </form>
               </Form>
             </div>

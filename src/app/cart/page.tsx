@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Card,
@@ -40,9 +40,16 @@ export default function Page() {
   const [subTotal, setSubTotal] = useState<number>(
     cart.reduce((total, item) => total + item.price * item.quantity, 0)
   );
-  const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [deliveryFee, setDeliveryFee] = useState<number>(10);
 
   const [Total, setTotal] = useState<number>(subTotal + deliveryFee);
+
+  useEffect(() => {
+    setSubTotal(
+      cart.reduce((total, item) => total + item.price * item.quantity, 0)
+    );
+    setTotal(subTotal + deliveryFee);
+  }, [cart, deliveryFee, subTotal]);
 
   const decreaseQuantity = (item: item) => {
     if (item.quantity <= 1) {
@@ -50,7 +57,7 @@ export default function Page() {
     } else {
       setCart((prev) =>
         prev.map((o) =>
-          o.id === item.product_id
+          o.product_id === item.product_id
             ? { ...o, quantity: item.quantity - 1 }
             : item
         )

@@ -16,23 +16,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
-
-const supabase = createClientComponentClient();
+import { useAtom } from "jotai";
+import { UserAtom } from "@/atoms";
+import { Database } from "@/lib/types/database.types";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
-  //COPY: Sessions from here
+  const [loading, setLoading] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null);
-
-  async function session() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    setUser(session?.user);
-  }
+  const supabase = createClientComponentClient<Database>();
+  const router = useRouter();
 
   useEffect(() => {
-    session();
-  }, []);
+    const fetchUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      console.log(session?.user);
+      setUser(session?.user);
+    };
+
+    fetchUser();
+  }, [supabase.auth]);
+
+  if (loading) return <div></div>;
 
   return (
     <nav className="navbar">
@@ -61,21 +69,14 @@ export default function Navbar() {
               <Link href="/profile">
                 <DropdownMenuItem>Profile</DropdownMenuItem>
               </Link>
-              <Link href="/orders">
+              <Link href="/profile/orders">
                 <DropdownMenuItem>Orders</DropdownMenuItem>
               </Link>
               <DropdownMenuItem
                 onClick={async () => {
                   const { error } = await supabase.auth.signOut();
-
-                  if (error) {
-                    toast({
-                      variant: "destructive",
-                      description: error.message,
-                    });
-                  } else {
-                    setUser(null);
-                  }
+                  setUser(null);
+                  router.push("/");
                 }}
               >
                 Logout

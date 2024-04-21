@@ -11,6 +11,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/lib/types/database.types";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import { useAtom } from "jotai";
+import { UserAtom } from "@/atoms";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -30,22 +32,25 @@ function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
+  const [user, setUser] = useAtom(UserAtom);
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
-    setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-    if (error) {
+    try {
+      const { data } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      setUser(data?.user);
+      router.refresh();
+    } catch (error: any) {
       toast({
         title: "Unable to login",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
-    } else {
-      router.refresh();
     }
   }
 
