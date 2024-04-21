@@ -65,7 +65,7 @@ export default function Page() {
         })
         .select();
 
-      console.log(order);
+      // console.log(order[0].order_id);
 
       if (order !== null) {
         cart.forEach(async (item: item) => {
@@ -84,6 +84,7 @@ export default function Page() {
       }
 
       toast({ description: "Order Placed Successfully!" });
+      router.push(`/profile/orders`);
     } catch (e) {
       console.log("Error", e);
     } finally {

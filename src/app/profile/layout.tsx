@@ -46,7 +46,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, [supabase, supabase.auth]);
 
   return (
-    <main className="w-full justify-stretch py-[6rem] px-[5rem] flex h-screen gap-4">
+    <main className="w-full justify-stretch py-[6rem] px-[5rem] flex min-h-screen gap-4">
       {loading || !user ? (
         <div className="w-full flex justify-center items-center">
           <Icons.spinner className="animate-spin" color="black" />
@@ -94,7 +94,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
           </div>
           <Separator orientation="vertical" />
-          <div className="w-[80%]">{children}</div>
+          <div className="w-[80%] h-full">{children}</div>
         </>
       )}
     </main>
